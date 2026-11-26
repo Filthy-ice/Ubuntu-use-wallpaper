@@ -20,7 +20,7 @@
 ## 快速开始
 
 ```bash
-git clone git@github.com:Filthy-ice/gnome-winwall.git
+git clone git@github.com:Filthy-ice/Ubuntu-use-wallpaper.git
 cd gnome-winwall
 ./scripts/setup.sh          # 构建引擎 + 安装扩展/选择器（缺依赖时脚本会打印 sudo 命令）
 # 注销重登一次（GNOME 只在登录时扫描新扩展）
