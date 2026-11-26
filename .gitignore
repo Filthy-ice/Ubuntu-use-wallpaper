@@ -1,6 +1,9 @@
 # build artifacts / dependencies (never commit)
 engine/
 source-build/
+bin/winwall-x11-setup
+bin/xshape-empty
+.build-glfw/
 build/
 **/build/
 

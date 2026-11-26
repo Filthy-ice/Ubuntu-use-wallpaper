@@ -17,7 +17,7 @@ DEPS=(
   libgl-dev libglew-dev freeglut3-dev libsdl2-dev liblz4-dev libxxf86vm-dev
   libglm-dev libglfw3-dev libavcodec-dev libavformat-dev libavutil-dev
   libswscale-dev libmpv-dev mpv libpulse-dev libpulse0 libfftw3-dev
-  libfreetype-dev libpng-dev
+  libfreetype-dev libpng-dev libxext-dev
 )
 
 SKIP_BUILD=0; KEEP_WEB=0; NO_INSTALL=0; FORCE=0
@@ -91,10 +91,27 @@ if [ "$SKIP_BUILD" = 0 ]; then
       cat > run-lwe.sh <<'SH'
 #!/bin/sh
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-LD_LIBRARY_PATH="$HERE" exec "$HERE/linux-wallpaperengine" "$@"
+export DISPLAY="${DISPLAY:-:0}"
+unset WAYLAND_DISPLAY
+LD_LIBRARY_PATH="$HERE/glfw-x11/lib:$HERE" exec "$HERE/linux-wallpaperengine" "$@"
 SH
       chmod +x run-lwe.sh
     )
+
+    log "building X11-only GLFW (runtime window must be X11 for input-shape)"
+    rm -rf "$KIT/.build-glfw"
+    git clone --depth 1 -b 3.4 https://github.com/glfw/glfw.git "$KIT/.build-glfw"
+    cmake -S "$KIT/.build-glfw" -B "$KIT/.build-glfw/build" \
+      -DGLFW_BUILD_WAYLAND=OFF -DGLFW_BUILD_X11=ON -DBUILD_SHARED_LIBS=ON \
+      -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+    cmake --build "$KIT/.build-glfw/build" -j"$(nproc)"
+    mkdir -p "$ENGINE/glfw-x11/lib"
+    cp -a "$KIT/.build-glfw/build/src/libglfw.so"* "$ENGINE/glfw-x11/lib/"
+    rm -rf "$KIT/.build-glfw"
+
+    log "building X11 helper (sets DESKTOP type + empty input region)"
+    mkdir -p "$KIT/bin"
+    gcc "$KIT/bin/winwall-x11-setup.c" -lX11 -lXext -o "$KIT/bin/winwall-x11-setup"
   fi
 fi
 

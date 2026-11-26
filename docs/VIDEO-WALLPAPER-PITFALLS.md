@@ -146,6 +146,26 @@
   - 结论：要用网页壁纸就只做 `--strip-debug`；只用场景/视频可以 `--strip-unneeded`。
 - 当前 `build/output` 运行期清单和体积见 `lwe-src/RUNTIME-KEEP.md`。
 
+## 21. 两个壁纸扩展不能同时启用；桌面右键菜单会被 restack 顶掉
+
+- **现象**：桌面右键菜单一闪就消失；点多了图标又点不动。
+- **根因 1**：Wallshader 的动画壁纸扩展和 winwall 同时启用，两个 DESKTOP 窗口互相 `lower()`，每次 restack 都会打断弹出菜单的 grab。
+- **根因 2**：旧堆叠守护把“修正次数”当全局上限（40 次），反复右键耗尽后守护永久停摆，窗口留在图标之上。
+- **解法**：
+  - 同时只启用一个壁纸扩展（`gnome-extensions disable wallshader@wallshader.github.io`）；
+  - 守护改为：检测到弹出菜单（type ≥ `DROPDOWN_MENU`）时**延迟处理**；失败指数退避（150ms→2s）；顺序正确即重置计数；只和 DING 的 `Desktop Icons` 窗口比较，忽略其它桌面窗口。
+- **验证**：右键菜单能正常停留；日志里 `stack fix #N ... (retry Xms)` 不会持续刷屏。
+
+## 22. X11 窗口要“设类型 + 清输入区域”，且不能在运行时依赖 set_type
+
+- **现象**：窗口变成盖住全屏、吃掉所有点击的一层，点 Qoder 反而失焦。
+- **根因**：运行时 `Meta.Window.set_type()` 对 X11 窗口不生效（`_NET_WM_WINDOW_TYPE` 仍是 NORMAL）；同时清输入区域的调用时机/窗口 id 不可靠（`input_rects` 仍为 1）。
+- **解法**：
+  - 渲染进程强制跑 X11（自建 X11-only GLFW，`WAYLAND_DISPLAY` 置空、`DISPLAY=:0`）；
+  - 助手 `bin/winwall-x11-setup <pid>` 按 **PID 轮询**找窗口，设 `_NET_WM_WINDOW_TYPE_DESKTOP` 并 `XShapeCombineRectangles(ShapeInput, ...)` 清空输入；
+  - 助手失败 → 直接杀掉渲染进程（宁可无壁纸，不可盖桌面）。
+- **验证**：`xprop _NET_WM_WINDOW_TYPE` 显示 DESKTOP；输入矩形数为 0；层序在普通窗口之下。
+
 ---
 
 ## 排查清单（下次出问题按这个顺序看）
