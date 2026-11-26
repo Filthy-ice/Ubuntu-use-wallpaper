@@ -1,0 +1,7 @@
+{
+  "uuid": "winwall@zhanghaobing.local",
+  "name": "Winwall (video wallpaper prototype)",
+  "description": "Plays a video as the desktop wallpaper via a DESKTOP-type Wayland window.",
+  "shell-version": ["50", "51"],
+  "version": 1
+}

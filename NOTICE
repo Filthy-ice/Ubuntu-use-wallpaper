@@ -1,0 +1,17 @@
+gnome-winwall — third-party notices
+
+This repository is licensed under GPL-3.0 (see COPYING).
+
+Derived code:
+- extension/background.js and extension/compositing.js are derived from
+  Wallshader (https://github.com/stonega/wallshader), GPL-3.0.
+  GObject type names were renamed (Winwall*); capture/paint logic follows upstream.
+
+External dependency (NOT bundled, built by scripts/setup.sh):
+- linux-wallpaperengine (https://github.com/Almamu/linux-wallpaperengine), GPL-3.0.
+  Its build downloads Chromium Embedded Framework (BSD-3-Clause) at build time.
+
+Wallpaper assets:
+- Wallpaper Engine and workshop wallpapers are owned by Valve / their authors.
+  This repository does not include any wallpaper files; users must own
+  Wallpaper Engine on Steam and keep their library locally.

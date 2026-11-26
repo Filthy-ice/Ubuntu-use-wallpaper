@@ -1,0 +1,30 @@
+# build artifacts / dependencies (never commit)
+engine/
+source-build/
+build/
+**/build/
+
+# generated desktop entry
+picker/winwall-picker.desktop
+
+# local config
+config/config.json
+
+# binaries and media
+*.so
+*.so.*
+*.pak
+*.dat
+*.bin
+*.o
+*.a
+*.mp4
+*.webm
+*.gif
+*.jpg
+*.png
+
+# misc
+*.log
+__pycache__/
+.DS_Store

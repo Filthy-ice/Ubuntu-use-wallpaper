@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Winwall 壁纸
+Comment=切换 GNOME 桌面动态壁纸（视频 / Wallpaper Engine 场景）
+Exec=/usr/bin/gjs -m @KIT@/picker/picker.js
+Icon=preferences-desktop-wallpaper
+Terminal=false
+Categories=Utility;
+StartupNotify=true

@@ -1,0 +1,9 @@
+{
+  "renderer": "scene",
+  "scene": "/home/USER/.local/share/Steam/steamapps/workshop/content/431960/WORKSHOP_ID",
+  "assets": "/home/USER/.local/share/Steam/steamapps/common/wallpaper_engine/assets",
+  "fps": 60,
+  "lwe": "/home/USER/tools/winwall/engine/run-lwe.sh",
+  "video": "/home/USER/.local/share/Steam/steamapps/workshop/content/431960/WORKSHOP_ID/wallpaper.mp4",
+  "panscan": 1.0
+}
