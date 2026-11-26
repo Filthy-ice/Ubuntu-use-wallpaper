@@ -56,14 +56,36 @@ objcopy --strip-unneeded libcef.so libcef.min.so && mv libcef.min.so libcef.so  
 find locales -type f ! -name en-US.pak ! -name zh-CN.pak -delete
 # 删测试/基准产物
 rm -f api-test testcpp-float psdpng-float bm_* fastconv* fastfilt-float run-test262 qjs qjsc function_source
-# 写启动器（固定库路径，避免 RUNPATH 依赖丢失）
+# 写启动器（X11 + 固定库路径；窗口必须是 X11 才能清空输入区域）
 cat > run-lwe.sh <<'EOF'
 #!/bin/sh
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-LD_LIBRARY_PATH="$HERE" exec "$HERE/linux-wallpaperengine" "$@"
+export DISPLAY="${DISPLAY:-:0}"
+unset WAYLAND_DISPLAY
+LD_LIBRARY_PATH="$HERE/glfw-x11/lib:$HERE" exec "$HERE/linux-wallpaperengine" "$@"
 EOF
 chmod +x run-lwe.sh
 ```
+
+### X11-only GLFW（必须）
+
+Ubuntu 的 libglfw 会坚持走 Wayland；而清空输入区域依赖 X11（X Shape），所以要在 kit 里放一份 X11-only GLFW：
+
+```bash
+git clone --depth 1 -b 3.4 https://github.com/glfw/glfw.git /tmp/glfw
+cmake -S /tmp/glfw -B /tmp/glfw/build -DGLFW_BUILD_WAYLAND=OFF -DGLFW_BUILD_X11=ON \
+  -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+cmake --build /tmp/glfw/build -j"$(nproc)"
+mkdir -p engine/glfw-x11/lib && cp -a /tmp/glfw/build/src/libglfw.so* engine/glfw-x11/lib/
+```
+
+### 输入区域/窗口类型助手（必须）
+
+```bash
+mkdir -p bin && gcc bin/winwall-x11-setup.c -lX11 -lXext -o bin/winwall-x11-setup
+```
+
+它按 PID 找到渲染窗口，设置 `_NET_WM_WINDOW_TYPE_DESKTOP` 并清空输入区域；失败时扩展会直接杀掉渲染进程，避免盖住桌面。
 
 删除任何文件前先读 [docs/RUNTIME-KEEP.md](docs/RUNTIME-KEEP.md)：`libkissfft-float.so.131` 等是运行期硬依赖，删了壁纸起不来。
 
