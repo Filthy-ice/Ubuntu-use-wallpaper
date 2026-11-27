@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v21 loaded (single delayed lower on apply)`);
+console.log(`${LOG}: module v22 loaded (polling align below any desktop window)`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -293,8 +293,7 @@ export default class WinwallExtension extends Extension {
       .filter(
         (window) =>
           this._windows.has(window) ||
-          (window.get_window_type() === Meta.WindowType.DESKTOP &&
-            (window.get_title() ?? '').startsWith('Desktop Icons')),
+          window.get_window_type() === Meta.WindowType.DESKTOP,
       );
     if (windows.length < 2) return;
     const order = global.display.sort_windows_by_stacking(windows);

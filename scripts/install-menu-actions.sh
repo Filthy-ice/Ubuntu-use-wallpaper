@@ -120,6 +120,7 @@ Name=复制桌面路径
 Exec=/home/USER/.local/bin/nemo-copy-path.sh %P
 Icon-Name=folder-symbolic
 Selection=None
+Extensions=any;
 Conditions=desktop;
 A4
 sed -i "s|/home/USER|$HOME|g" "$ACT/copy-current-path.nemo_action"
@@ -131,6 +132,7 @@ Name=在终端中打开
 Exec=/home/USER/.local/bin/nemo-open-terminal.sh %P
 Icon-Name=utilities-terminal-symbolic
 Selection=None
+Extensions=any;
 Conditions=desktop;
 EscapeSpaces=true
 A5
@@ -216,6 +218,7 @@ Name=新建文本文件
 Exec=/home/USER/.local/bin/nemo-new-text.sh %P
 Icon-Name=document-new-symbolic
 Selection=None
+Extensions=any;
 Conditions=desktop;
 A12
 sed -i "s|/home/USER|$HOME|g" "$ACT/new-text-file.nemo_action"
