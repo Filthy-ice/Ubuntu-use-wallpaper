@@ -30,30 +30,8 @@ PY
 gsettings set org.cinnamon.desktop.background picture-uri "file://$KIT/assets/transparent.png" 2>/dev/null || true
 gsettings set org.cinnamon.desktop.background picture-options 'stretch' 2>/dev/null || true
 
-echo "installing nemo actions (copy path / remove symlink)"
-mkdir -p "$HOME/.local/bin" "$HOME/.local/share/nemo/actions"
-cat > "$HOME/.local/bin/nemo-copy-path.sh" <<'SH'
-#!/bin/bash
-printf '%s\n' "$@" | sed '/^$/d' | xclip -selection clipboard
-SH
-cat > "$HOME/.local/bin/nemo-remove-links.sh" <<'SH'
-#!/bin/bash
-for f in "$@"; do
-  [ -n "$f" ] || continue
-  if [ -L "$f" ]; then gio trash "$f" 2>/dev/null || rm -- "$f"; fi
-done
-SH
-chmod +x "$HOME/.local/bin/nemo-copy-path.sh" "$HOME/.local/bin/nemo-remove-links.sh"
-cat > "$HOME/.local/share/nemo/actions/copy-path.nemo_action" <<ACT
-[Nemo Action]
-Active=true
-Name=复制路径
-Comment=复制所选文件的绝对路径
-Exec=$HOME/.local/bin/nemo-copy-path.sh %F
-Icon-Name=edit-copy-symbolic
-Selection=m
-Extensions=any;
-ACT
+echo "installing rich context menu (nemo + nautilus)"
+"$KIT/scripts/install-menu-actions.sh"
 cat > "$HOME/.local/share/nemo/actions/remove-symlink.nemo_action" <<ACT
 [Nemo Action]
 Active=true
