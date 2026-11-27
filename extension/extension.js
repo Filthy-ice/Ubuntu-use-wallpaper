@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v20 loaded (polling fix, focus-gated)`);
+console.log(`${LOG}: module v21 loaded (single delayed lower on apply)`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -255,6 +255,12 @@ export default class WinwallExtension extends Extension {
         queuePlacement();
         window.lower();
         this._desktop.sync();
+        // one extra settle pass: a freshly mapped window must not sit above
+        // the Nemo desktop icon window (clicks would be swallowed)
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1200, () => {
+          if (this._enabled && this._windows.has(window)) window.lower();
+          return GLib.SOURCE_REMOVE;
+        });
       }),
       window.connect('size-changed', queuePlacement),
       window.connect('position-changed', queuePlacement),
