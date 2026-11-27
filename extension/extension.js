@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v12 loaded`);
+console.log(`${LOG}: module v15 loaded (wayland + stacking watchdog)`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -58,6 +58,8 @@ export default class WinwallExtension extends Extension {
     this._processes = new Map(); // Gio.Subprocess -> monitor index
     this._windows = new Map(); // Meta.Window -> { index, placement, signals }
     this._signals = [];
+    this._stackQueued = 0;
+    this._stackAttempts = 0;
     this._config = readConfig();
     let captureWidth = 0;
     let captureHeight = 0;
@@ -83,11 +85,16 @@ export default class WinwallExtension extends Extension {
       Main.layoutManager,
       Main.layoutManager.connect('monitors-changed', () => this._restart()),
     );
+    this._watch(
+      global.display,
+      global.display.connect('restacked', () => this._queueStackFix()),
+    );
     console.log(
       `${LOG}: enabled, renderer=${this._config.renderer} ` +
         `source=${this._config.renderer === 'scene' ? this._config.scene : this._config.video}`,
     );
     this._start();
+    this._queueStackFix();
   }
 
   _watch(object, id) {
@@ -165,14 +172,13 @@ export default class WinwallExtension extends Extension {
     const launcher = new Gio.SubprocessLauncher({ flags: Gio.SubprocessFlags.NONE });
     // X11 (Xwayland) window so it can be given an empty input region: clicks and
     // context menus pass through to the desktop icons underneath.
-    launcher.setenv('DISPLAY', GLib.getenv('DISPLAY') ?? ':0', true);
-    launcher.unsetenv('WAYLAND_DISPLAY');
+    launcher.setenv('GDK_BACKEND', 'wayland', true);
+    launcher.unsetenv('DISPLAY');
     launcher.unsetenv('XDG_ACTIVATION_TOKEN');
     launcher.unsetenv('DESKTOP_STARTUP_ID');
     try {
       const process = launcher.spawnv(args);
       this._processes.set(process, monitor.index);
-      this._setupX11(process, monitor.index);
       process.wait_async(null, (child, result) => {
         try {
           child.wait_finish(result);
@@ -187,35 +193,6 @@ export default class WinwallExtension extends Extension {
       console.warn(`${LOG}: monitor ${monitor.index}: ${error.message}`);
     } finally {
       launcher.close();
-    }
-  }
-
-  _setupX11(process, index) {
-    const helper = this._config.xsetup;
-    if (!helper || !GLib.file_test(helper, GLib.FileTest.IS_EXECUTABLE)) {
-      console.warn(`${LOG}: x11 setup helper missing: ${helper}`);
-      return;
-    }
-    const pid = process.get_identifier();
-    try {
-      const sub = Gio.Subprocess.new([helper, pid, '8000'], Gio.SubprocessFlags.STDOUT_SILENCE);
-      sub.wait_async(null, (child, result) => {
-        let ok = false;
-        try {
-          ok = child.wait_finish(result);
-        } catch (error) {
-          console.warn(`${LOG}: x11 setup: ${error.message}`);
-        }
-        if (!ok) {
-          console.warn(`${LOG}: x11 setup failed for pid ${pid}; stopping renderer`);
-          process.send_signal(15);
-          this._processes.delete(process);
-          return;
-        }
-        console.log(`${LOG}: monitor ${index} x11 window configured`);
-      });
-    } catch (error) {
-      console.warn(`${LOG}: x11 setup: ${error.message}`);
     }
   }
 
@@ -244,7 +221,7 @@ export default class WinwallExtension extends Extension {
     const monitor = Main.layoutManager.monitors[index];
     if (!monitor) return;
     try {
-      window.set_type(Meta.WindowType.NORMAL);
+      window.set_type(Meta.WindowType.DESKTOP);
     } catch (error) {
       console.warn(`${LOG}: set_type failed: ${error.message}`);
       this._killIndex(index);
@@ -278,7 +255,9 @@ export default class WinwallExtension extends Extension {
     managed.signals = [
       window.connect('shown', () => {
         queuePlacement();
+        window.lower();
         this._desktop.sync();
+        this._queueStackFix();
       }),
       window.connect('size-changed', queuePlacement),
       window.connect('position-changed', queuePlacement),
@@ -290,6 +269,52 @@ export default class WinwallExtension extends Extension {
     this._desktop.sync();
     this._compositing.setRequired(true);
     console.log(`${LOG}: monitor ${index} window ${window.get_id()} managed`);
+  }
+
+  _queueStackFix(delay = 200) {
+    if (this._stackQueued || !this._enabled) return;
+    this._stackQueued = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
+      this._stackQueued = 0;
+      this._syncStacking();
+      return GLib.SOURCE_REMOVE;
+    });
+  }
+
+  _syncStacking() {
+    if (!this._enabled || !this._windows.size) return;
+    const menus = global.display
+      .list_all_windows()
+      .some((window) => window.get_window_type() >= Meta.WindowType.DROPDOWN_MENU);
+    if (menus) {
+      this._queueStackFix(500);
+      return;
+    }
+    const windows = global.display
+      .list_all_windows()
+      .filter(
+        (window) =>
+          this._windows.has(window) ||
+          (window.get_window_type() === Meta.WindowType.DESKTOP &&
+            (window.get_title() ?? '').startsWith('Desktop Icons')),
+      );
+    const order = global.display.sort_windows_by_stacking(windows);
+    const name = (window) => (window.get_title() ?? '?').slice(0, 22);
+    for (const window of this._windows.keys()) {
+      const index = order.indexOf(window);
+      const below = order.filter(
+        (other) => !this._windows.has(other) && order.indexOf(other) < index,
+      );
+      if (!below.length) continue;
+      this._stackAttempts = (this._stackAttempts ?? 0) + 1;
+      const wait = Math.min(2000, 150 * 2 ** Math.min(this._stackAttempts - 1, 4));
+      console.log(
+        `${LOG}: stack fix #${this._stackAttempts} below ${below.map(name).join(',')} (retry ${wait}ms)`,
+      );
+      window.lower();
+      this._queueStackFix(wait);
+      return;
+    }
+    this._stackAttempts = 0;
   }
 
   _killIndex(index) {
