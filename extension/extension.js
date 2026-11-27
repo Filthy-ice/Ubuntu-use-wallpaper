@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v16 loaded (menu-aware stacking watchdog)`);
+console.log(`${LOG}: module v18 loaded (focus-gated stacking)`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -290,6 +290,17 @@ export default class WinwallExtension extends Extension {
       .list_all_windows()
       .some((window) => window.get_window_type() >= Meta.WindowType.MENU);
     if (menus) {
+      this._queueStackFix(400);
+      return;
+    }
+    // DING's context menu grabs focus via its desktop window; while it owns
+    // focus any restack would dismiss the menu, so stay quiet.
+    const focus = global.display.get_focus_window();
+    if (
+      focus &&
+      focus.get_window_type() === Meta.WindowType.DESKTOP &&
+      (focus.get_title() ?? '').startsWith('Desktop Icons')
+    ) {
       this._queueStackFix(400);
       return;
     }
