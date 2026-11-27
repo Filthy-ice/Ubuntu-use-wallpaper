@@ -104,6 +104,12 @@ export default class WinwallExtension extends Extension {
   }
 
   _start() {
+    // 拉起前先清掉游离的旧渲染进程（快速切换时 SIGTERM 清理可能滞后）
+    try {
+      GLib.spawn_command_line_sync(
+        'pkill -9 -f engine/linux-wallpaperengine',
+      );
+    } catch (e) { /* ignore */ }
     for (const monitor of Main.layoutManager.monitors) this._spawn(monitor);
   }
 
