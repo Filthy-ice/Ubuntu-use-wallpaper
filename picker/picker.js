@@ -292,6 +292,17 @@ app.connect('activate', () => {
   const offBtn = new Gtk.Button({
     label: extensionOn() ? '⏻ 关闭壁纸' : '⏻ 开启壁纸',
   });
+
+  const updateSwitches = () => {
+    pauseBtn.set_label(isPaused() ? '▶ 继续' : '⏸ 暂停');
+    offBtn.set_label(extensionOn() ? '⏻ 关闭壁纸' : '⏻ 开启壁纸');
+  };
+  updateSwitches();
+  // 状态可能被外部（winwallctl / 扩展应用）改变：定时把按钮文字对齐到真实状态
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+    updateSwitches();
+    return GLib.SOURCE_CONTINUE;
+  });
   offBtn.connect('clicked', () => {
     if (extensionOn()) {
       if (isPaused()) GLib.spawn_command_line_sync(`${KIT}/winwallctl.sh resume`);
