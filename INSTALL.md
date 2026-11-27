@@ -104,6 +104,16 @@ gnome-extensions info winwall@zhanghaobing.local   # 状态应为 ACTIVE
 
 > 之后每次修改扩展 JS 都要 `install` + 注销重登；只改配置不需要。
 
+## 3.5 桌面图标改由 Nemo 提供（必需）
+
+DING 会在每次叠层变化时把自己再沉一次，和壁纸窗口形成永久的抢层战争（表现：右键菜单闪退、图标时灵时不灵）。因此桌面图标交给 Nemo、背景设为透明：
+
+```bash
+./winwallctl.sh desktop-setup
+```
+
+脚本做三件事：停用 DING、写入 nemo-desktop 自启（3 秒延迟）、把 Cinnamon 桌面背景设为 `assets/transparent.png`，并安装「复制路径 / 删除软链接」右键动作。完成后注销重登一次。
+
 ## 4. 安装图形选择器（可选）
 
 ```bash

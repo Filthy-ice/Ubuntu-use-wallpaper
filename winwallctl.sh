@@ -119,6 +119,9 @@ print(json.loads(p.read_text()).get('renderer','video') if p.exists() else 'vide
     gnome-extensions enable "$UUID"
     echo "stack order restored"
     ;;
+  desktop-setup)
+    exec "$KIT/scripts/setup-desktop.sh"
+    ;;
   pick)
     exec gjs -m "$KIT/picker/picker.js"
     ;;

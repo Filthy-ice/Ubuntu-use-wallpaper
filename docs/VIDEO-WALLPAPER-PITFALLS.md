@@ -166,6 +166,17 @@
   - 助手失败 → 直接杀掉渲染进程（宁可无壁纸，不可盖桌面）。
 - **验证**：`xprop _NET_WM_WINDOW_TYPE` 显示 DESKTOP；输入矩形数为 0；层序在普通窗口之下。
 
+## 23. 最终兼容方案：Nemo 透明桌面（DING 不可共存）
+
+- **争论点**：桌面层壁纸窗口 + DING 图标层在同一层，`lower()` 会让 DING 在每次 restack 时再自沉一次，形成死循环——自动修层会打断右键菜单（闪退/消失），不修层则图标被盖。**该矛盾无解**。
+- **输入穿透 shim（LD_PRELOAD 清空 wl_surface 输入区域）**：mpv 正常；lwe（CEF）启动即段错误，场景壁纸不可用。
+- **X11 桌面层**：GLFW 会把 `_NET_WM_WINDOW_TYPE` 复位成 NORMAL，且 mutter 在 Wayland 会话不认 XShape 输入区域。
+- **可行终态**：停用 DING，用 **Nemo 桌面（背景透明 PNG）** 提供图标与右键；
+  - Nemo 不会自我下沉，层序一次摆放即稳定；
+  - 壁纸窗口在下、Nemo 在上：图标/菜单可点，视频从透明背景透出；
+  - 右键「复制路径 / 删除软链接」用 Nemo Actions（`scripts/setup-desktop.sh` 安装）。
+- 已实测：视频动态 + 图标 + 右键菜单 + Qoder/Ice 焦点全部正常，关/开壁纸后仍正常。
+
 ---
 
 ## 排查清单（下次出问题按这个顺序看）

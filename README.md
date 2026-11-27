@@ -13,6 +13,7 @@
 ## 要求
 
 - GNOME 50 / 51，**Wayland** 会话（Ubuntu 26.04 已验证）
+- 桌面图标改由 **Nemo + 透明背景**提供（DING 与桌面层壁纸窗口互斥，必须停用）；一条命令：`./winwallctl.sh desktop-setup`
 - 已安装 mpv
 - 已通过 Steam 拥有并安装 Wallpaper Engine（提供 `assets` 目录）
 - 首次安装需约 6 GB 临时磁盘（源码 + CEF 下载 1.8 GB），最终运行时约 300 MB
@@ -39,6 +40,7 @@ cd gnome-winwall
 ./winwallctl.sh verify                  # 依赖检查 + 出帧冒烟测试
 ./winwallctl.sh status                  # 扩展/进程/日志
 ./winwallctl.sh install                 # 同步 extension/ 到 GNOME（改过 JS 后，需注销重登）
+./winwallctl.sh desktop-setup           # 停用 DING、装 Nemo 透明桌面 + 右键动作（一次性）
 ```
 
 配置：`~/.config/winwall/config.json`（选择器会自动写）。速度档位 = `fps`（场景 30/60/120）。
