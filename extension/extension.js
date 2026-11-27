@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v15 loaded (wayland + stacking watchdog)`);
+console.log(`${LOG}: module v16 loaded (menu-aware stacking watchdog)`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -271,8 +271,12 @@ export default class WinwallExtension extends Extension {
     console.log(`${LOG}: monitor ${index} window ${window.get_id()} managed`);
   }
 
-  _queueStackFix(delay = 200) {
-    if (this._stackQueued || !this._enabled) return;
+  _queueStackFix(delay = 250) {
+    if (!this._enabled) return;
+    if (this._stackQueued) {
+      GLib.source_remove(this._stackQueued);
+      this._stackQueued = 0;
+    }
     this._stackQueued = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
       this._stackQueued = 0;
       this._syncStacking();
@@ -284,9 +288,9 @@ export default class WinwallExtension extends Extension {
     if (!this._enabled || !this._windows.size) return;
     const menus = global.display
       .list_all_windows()
-      .some((window) => window.get_window_type() >= Meta.WindowType.DROPDOWN_MENU);
+      .some((window) => window.get_window_type() >= Meta.WindowType.MENU);
     if (menus) {
-      this._queueStackFix(500);
+      this._queueStackFix(400);
       return;
     }
     const windows = global.display
