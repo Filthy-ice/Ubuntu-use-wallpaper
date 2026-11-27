@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v19 loaded (menu-first: no auto restack)`);
+console.log(`${LOG}: module v20 loaded (polling fix, focus-gated)`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -88,6 +88,11 @@ export default class WinwallExtension extends Extension {
         `source=${this._config.renderer === 'scene' ? this._config.scene : this._config.video}`,
     );
     this._start();
+    if (!this._pollTimer)
+      this._pollTimer = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
+        this._pollFix();
+        return GLib.SOURCE_CONTINUE;
+      });
   }
 
   _watch(object, id) {
@@ -263,6 +268,41 @@ export default class WinwallExtension extends Extension {
     console.log(`${LOG}: monitor ${index} window ${window.get_id()} managed`);
   }
 
+  _pollFix() {
+    if (!this._enabled || !this._windows.size) return;
+    // While DING's context menu is open it owns focus; any restack dismisses it.
+    const focus = global.display.get_focus_window();
+    if (
+      focus &&
+      focus.get_window_type() === Meta.WindowType.DESKTOP &&
+      (focus.get_title() ?? '').startsWith('Desktop Icons')
+    )
+      return;
+    const menus = global.display
+      .list_all_windows()
+      .some((window) => window.get_window_type() >= Meta.WindowType.MENU);
+    if (menus) return;
+    const windows = global.display
+      .list_all_windows()
+      .filter(
+        (window) =>
+          this._windows.has(window) ||
+          (window.get_window_type() === Meta.WindowType.DESKTOP &&
+            (window.get_title() ?? '').startsWith('Desktop Icons')),
+      );
+    if (windows.length < 2) return;
+    const order = global.display.sort_windows_by_stacking(windows);
+    for (const window of this._windows.keys()) {
+      const index = order.indexOf(window);
+      const below = order.filter(
+        (other) => !this._windows.has(other) && order.indexOf(other) < index,
+      );
+      if (!below.length) continue;
+      window.lower();
+      return;
+    }
+  }
+
   _killIndex(index) {
     for (const [process, processIndex] of [...this._processes]) {
       if (processIndex !== index) continue;
@@ -292,6 +332,8 @@ export default class WinwallExtension extends Extension {
   disable() {
     this._enabled = false;
     this._stop();
+    if (this._pollTimer) GLib.source_remove(this._pollTimer);
+    this._pollTimer = 0;
     this._desktop.destroy();
     for (const [object, id] of this._signals) object.disconnect(id);
     this._signals = [];
