@@ -123,7 +123,7 @@ print(json.loads(p.read_text()).get('renderer','video') if p.exists() else 'vide
     exec "$KIT/scripts/setup-desktop.sh"
     ;;
   pick)
-    exec gjs -m "$KIT/picker/picker.js"
+    GDK_BACKEND=x11 exec gjs -m "$KIT/picker/picker.js"
     ;;
   status)
     echo "== extension =="
