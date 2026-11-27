@@ -112,6 +112,13 @@ print(json.loads(p.read_text()).get('renderer','video') if p.exists() else 'vide
   toggle)
     if [ -f "$HOME/.cache/winwall/paused" ]; then "$0" resume; else "$0" pause; fi
     ;;
+  fix)
+    # menu-first mode: restore icon stacking after context-menu interactions
+    gnome-extensions disable "$UUID" >/dev/null 2>&1 || true
+    sleep 1
+    gnome-extensions enable "$UUID"
+    echo "stack order restored"
+    ;;
   pick)
     exec gjs -m "$KIT/picker/picker.js"
     ;;

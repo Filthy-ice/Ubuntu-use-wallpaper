@@ -33,16 +33,17 @@ struct wl_proxy *wl_proxy_marshal_flags(struct wl_proxy *proxy, uint32_t opcode,
     marshal_array_fn fn = real();
     if (!fn) return NULL;
 
-    if (interface == &wl_compositor_interface && opcode == WL_COMPOSITOR_CREATE_SURFACE) {
-        union wl_argument empty[1] = {{0}};
-        struct wl_proxy *surface = fn(proxy, opcode, interface, version, flags, empty);
+    static int first_surface = 1;  /* only the toplevel: CEF creates later surfaces */
+    if (first_surface && interface == &wl_compositor_interface && opcode == WL_COMPOSITOR_CREATE_SURFACE) {
+        first_surface = 0;
+        union wl_argument new_id[1] = {{.n = (int32_t)version}};
+        struct wl_proxy *surface = fn(proxy, opcode, interface, version, flags, new_id);
         if (!surface) return NULL;
-        union wl_argument no_args[1] = {{0}};
+        union wl_argument region_new[1] = {{.n = (int32_t)version}};
         struct wl_proxy *region = fn(proxy, WL_COMPOSITOR_CREATE_REGION,
-                                     &wl_region_interface, version, 0, no_args);
+                                     &wl_region_interface, version, 0, region_new);
         union wl_argument region_arg[1] = {{.o = (struct wl_object *)region}};
         fn(surface, WL_SURFACE_SET_INPUT_REGION, NULL, version, 0, region_arg);
-        fn(region, WL_REGION_DESTROY, NULL, version, WL_MARSHAL_FLAG_DESTROY, empty);
         return surface;
     }
 
