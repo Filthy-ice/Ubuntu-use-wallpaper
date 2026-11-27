@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     Display *d = XOpenDisplay(NULL);
     if (!d) { fprintf(stderr, "cannot open display\n"); return 1; }
     Atom typeAtom = XInternAtom(d, "_NET_WM_WINDOW_TYPE", False);
-    Atom desktopAtom = XInternAtom(d, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
+    Atom normalAtom = XInternAtom(d, "_NET_WM_WINDOW_TYPE_NORMAL", False);
     Window root = DefaultRootWindow(d);
     Window target = None;
     struct timespec start, now;
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
         usleep(100000);
     }
     XChangeProperty(d, target, typeAtom, XA_ATOM, 32, PropModeReplace,
-                    (unsigned char *)&desktopAtom, 1);
+                    (unsigned char *)&normalAtom, 1);
     XShapeCombineRectangles(d, target, ShapeInput, 0, 0, NULL, 0, ShapeSet, Unsorted);
     XSync(d, False);
     printf("configured 0x%lx\n", target);

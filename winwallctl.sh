@@ -99,6 +99,19 @@ print(json.loads(p.read_text()).get('renderer','video') if p.exists() else 'vide
       fi
     fi
     ;;
+  pause)
+    for pid in $(pgrep -f 'engine/[l]inux-wallpaperengine'; pgrep -f 'mpv --no-config'); do kill -STOP "$pid"; done
+    mkdir -p "$HOME/.cache/winwall"; touch "$HOME/.cache/winwall/paused"
+    echo "paused"
+    ;;
+  resume)
+    for pid in $(pgrep -f 'engine/[l]inux-wallpaperengine'; pgrep -f 'mpv --no-config'); do kill -CONT "$pid"; done
+    rm -f "$HOME/.cache/winwall/paused"
+    echo "resumed"
+    ;;
+  toggle)
+    if [ -f "$HOME/.cache/winwall/paused" ]; then "$0" resume; else "$0" pause; fi
+    ;;
   pick)
     exec gjs -m "$KIT/picker/picker.js"
     ;;

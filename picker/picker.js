@@ -265,6 +265,44 @@ app.connect('activate', () => {
     icon_name: 'view-refresh-symbolic',
     tooltip_text: '重新扫描库',
   });
+
+  const PAUSED_FILE = GLib.build_filenamev([
+    GLib.get_home_dir(), '.cache/winwall/paused',
+  ]);
+  const rendererPid = () => {
+    const [, out] = GLib.spawn_command_line_sync(
+      "sh -c \"pgrep -f 'engine/[l]inux-wallpaperengine' | head -1\"",
+    );
+    return new TextDecoder().decode(out).trim();
+  };
+  const isPaused = () => GLib.file_test(PAUSED_FILE, GLib.FileTest.EXISTS);
+  const extensionOn = () => {
+    const [, out] = GLib.spawn_command_line_sync(
+      'sh -c "gsettings get org.gnome.shell.enabled-extensions" ',
+    );
+    return new TextDecoder().decode(out).includes('winwall@');
+  };
+
+  const pauseBtn = new Gtk.Button({ label: isPaused() ? '▶ 继续' : '⏸ 暂停' });
+  pauseBtn.connect('clicked', () => {
+    GLib.spawn_command_line_sync(`${KIT}/winwallctl.sh toggle`);
+    pauseBtn.set_label(isPaused() ? '▶ 继续' : '⏸ 暂停');
+    toast(isPaused() ? '壁纸已暂停（画面定格）' : '壁纸已继续');
+  });
+  const offBtn = new Gtk.Button({
+    label: extensionOn() ? '⏻ 关闭壁纸' : '⏻ 开启壁纸',
+  });
+  offBtn.connect('clicked', () => {
+    if (extensionOn()) {
+      GLib.spawn_command_line_async('gnome-extensions disable winwall@zhanghaobing.local');
+      offBtn.set_label('⏻ 开启壁纸');
+      toast('壁纸已关闭（静态桌面）；重新开启点本按钮');
+    } else {
+      GLib.spawn_command_line_async('gnome-extensions enable winwall@zhanghaobing.local');
+      offBtn.set_label('⏻ 关闭壁纸');
+      toast('壁纸已开启，稍等 1–2 秒');
+    }
+  });
   refresh.connect('clicked', () => {
     items = scanLibrary();
     rebuild();
@@ -281,6 +319,8 @@ app.connect('activate', () => {
   bar.append(search);
   bar.append(typeFilter);
   bar.append(countLabel);
+  bar.append(pauseBtn);
+  bar.append(offBtn);
   bar.append(refresh);
   toolbar.add_top_bar(bar);
 

@@ -9,7 +9,7 @@ import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 
 const LOG = 'winwall';
-console.log(`${LOG}: module v11 loaded`);
+console.log(`${LOG}: module v12 loaded`);
 const HOME = GLib.get_home_dir();
 const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'winwall', 'config.json']);
 const DEFAULT_VIDEO = '';
@@ -238,7 +238,7 @@ export default class WinwallExtension extends Extension {
     const monitor = Main.layoutManager.monitors[index];
     if (!monitor) return;
     try {
-      window.set_type(Meta.WindowType.DESKTOP);
+      window.set_type(Meta.WindowType.NORMAL);
     } catch (error) {
       console.warn(`${LOG}: set_type failed: ${error.message}`);
       this._killIndex(index);
