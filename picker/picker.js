@@ -278,7 +278,7 @@ app.connect('activate', () => {
   const isPaused = () => GLib.file_test(PAUSED_FILE, GLib.FileTest.EXISTS);
   const extensionOn = () => {
     const [, out] = GLib.spawn_command_line_sync(
-      'sh -c "gsettings get org.gnome.shell.enabled-extensions" ',
+      'sh -c "gsettings get org.gnome.shell enabled-extensions" ',
     );
     return new TextDecoder().decode(out).includes('winwall@');
   };
@@ -294,6 +294,7 @@ app.connect('activate', () => {
   });
   offBtn.connect('clicked', () => {
     if (extensionOn()) {
+      if (isPaused()) GLib.spawn_command_line_sync(`${KIT}/winwallctl.sh resume`);
       GLib.spawn_command_line_async('gnome-extensions disable winwall@zhanghaobing.local');
       offBtn.set_label('⏻ 开启壁纸');
       toast('壁纸已关闭（静态桌面）；重新开启点本按钮');
