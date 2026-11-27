@@ -177,6 +177,13 @@
   - 右键「复制路径 / 删除软链接」用 Nemo Actions（`scripts/setup-desktop.sh` 安装）。
 - 已实测：视频动态 + 图标 + 右键菜单 + Qoder/Ice 焦点全部正常，关/开壁纸后仍正常。
 
+## 24. Nemo 6.4 自定义右键动作：Selection 只认小写 any/none
+
+- **现象**：`~/.local/share/nemo/actions` 里的动作文件明明在，Nemo 菜单里却一项都不出现（文件管理器与桌面都一样）。
+- **根因**：`Selection=m`（单选也不匹配）和 `Selection=None`（大写）不符合 Nemo 6.4 的校验；动作会被加载但永远不可见。日志只报缺字段，看不出这层。
+- **解法**：文件/多选用 `Selection=any`，桌面空白用 `Selection=none`；文件名用 ASCII，`Extensions=any;` 或 `Mimetypes=` 必填其一；`Conditions=desktop;` 仅用于空白处动作。
+- **验证**：右键出现自定义项；`ls ~/.local/share/nemo/actions` 与菜单一一对应；改文件后 Nemo 会通过目录监视自动重载，无需重启。
+
 ---
 
 ## 排查清单（下次出问题按这个顺序看）

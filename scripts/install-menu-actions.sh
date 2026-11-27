@@ -83,7 +83,7 @@ Name=复制路径
 Comment=复制所选文件的绝对路径
 Exec=/home/USER/.local/bin/nemo-copy-path.sh %F
 Icon-Name=edit-copy-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A1
@@ -95,7 +95,7 @@ Active=true
 Name=复制文件名
 Exec=/home/USER/.local/bin/nemo-copy-name.sh %F
 Icon-Name=edit-copy-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A2
@@ -107,7 +107,7 @@ Active=true
 Name=复制文件 URI
 Exec=/home/USER/.local/bin/nemo-copy-uri.sh %F
 Icon-Name=edit-copy-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A3
@@ -119,7 +119,7 @@ Active=true
 Name=复制桌面路径
 Exec=/home/USER/.local/bin/nemo-copy-path.sh %P
 Icon-Name=folder-symbolic
-Selection=None
+Selection=none
 Extensions=any;
 Conditions=desktop;
 A4
@@ -131,7 +131,7 @@ Active=true
 Name=在终端中打开
 Exec=/home/USER/.local/bin/nemo-open-terminal.sh %P
 Icon-Name=utilities-terminal-symbolic
-Selection=None
+Selection=none
 Extensions=any;
 Conditions=desktop;
 EscapeSpaces=true
@@ -156,7 +156,7 @@ Active=true
 Name=用 VS Code 打开
 Exec=/home/USER/.local/bin/nemo-open-code.sh %F
 Icon-Name=text-editor-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A7
@@ -168,7 +168,7 @@ Active=true
 Name=计算 SHA-256
 Exec=/home/USER/.local/bin/nemo-sha256.sh %F
 Icon-Name=security-high-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A8
@@ -180,7 +180,7 @@ Active=true
 Name=压缩为 ZIP
 Exec=/home/USER/.local/bin/nemo-zip.sh %F
 Icon-Name=package-x-generic-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A9
@@ -193,7 +193,7 @@ Name=删除软链接（只删链接）
 Comment=把选中的软链接移到回收站，不影响目标
 Exec=/home/USER/.local/bin/nemo-remove-links.sh %F
 Icon-Name=edit-delete-symbolic
-Selection=m
+Selection=any
 Mimetypes=inode/symlink;
 EscapeSpaces=true
 A10
@@ -205,7 +205,7 @@ Active=true
 Name=彻底删除（不进回收站）…
 Exec=/home/USER/.local/bin/nemo-trash-permanent.sh %F
 Icon-Name=edit-delete-symbolic
-Selection=m
+Selection=any
 Extensions=any;
 EscapeSpaces=true
 A11
@@ -217,7 +217,7 @@ Active=true
 Name=新建文本文件
 Exec=/home/USER/.local/bin/nemo-new-text.sh %P
 Icon-Name=document-new-symbolic
-Selection=None
+Selection=none
 Extensions=any;
 Conditions=desktop;
 A12
